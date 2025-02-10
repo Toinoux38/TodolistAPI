@@ -8,25 +8,23 @@ import com.cpe.todolist.model.UserRole;
 import com.cpe.todolist.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TaskService {
     private final TaskRepository taskRepository;
 
     public List<Task> getTasks(User currentUser) {
-        switch (currentUser.getRole()) {
-            case SUPER_USER:
-                return taskRepository.findAll();
-            case COMPANY_ADMIN:
-                return taskRepository.findByUserCompany(currentUser.getCompany());
-            case STANDARD_USER:
-                return taskRepository.findByUser(currentUser);
-            default:
-                throw new UnauthorizedAccessException("Invalid user role");
-        }
+        return switch (currentUser.getRole()) {
+            case SUPER_USER -> taskRepository.findAll();
+            case COMPANY_ADMIN -> taskRepository.findByUserCompany(currentUser.getCompany());
+            case STANDARD_USER -> taskRepository.findByUser(currentUser);
+            default -> throw new UnauthorizedAccessException("Invalid user role");
+        };
     }
 
     public Task getTask(Long id, User currentUser) {
